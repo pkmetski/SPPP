@@ -8,6 +8,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.Date;
 
 public class UDPForwarder {
 
@@ -20,22 +21,19 @@ public class UDPForwarder {
 
 			// create socket at agreed port
 			aSocket = new DatagramSocket(serverPort);
-			System.out.println("Listening at " + aSocket.getLocalAddress()
+			System.out.println(new Date()+" UDPForwarder: Listening at " + aSocket.getLocalAddress()
 					+ ":" + aSocket.getLocalPort());
 			// max packet size is 65535 bytes
 			byte[] buffer = new byte[65535];
 			while (true) {
 				DatagramPacket request = new DatagramPacket(buffer,
 						buffer.length);
-				System.out.println("Listening...");
+				System.out.println(new Date()+" UDPForwarder: Listening...");
 				aSocket.receive(request);
 
-				System.out.println("Received " + request.getLength() + " bytes"
+				System.out.println(new Date()+" UDPForwarder: Received " + request.getLength() + " bytes"
 						+ " from " + request.getAddress().toString() + ":"
 						+ request.getPort());
-
-				System.out.println("Forwarding to: " + destAddress + " at "
-						+ destPort);
 
 				/* The forwarding part */
 				/* Ignore any traffic from h */
@@ -44,12 +42,15 @@ public class UDPForwarder {
 							request.getData(), request.getLength(),
 							destAddress, destPort);
 					aSocket.send(forwardedPacket);
+
+					System.out.println(new Date()+" UDPForwarder: Forwarding to: " + destAddress + " at "
+							+ destPort);
 				}
 			}
 		} catch (SocketException e) {
-			System.out.println("Socket: " + e.getMessage());
+			System.out.println(new Date()+" UDPForwarder: Socket: " + e.getMessage());
 		} catch (IOException e) {
-			System.out.println("IO: " + e.getMessage());
+			System.out.println(new Date()+" UDPForwarder: IO: " + e.getMessage());
 		} finally {
 			if (aSocket != null)
 				aSocket.close();
