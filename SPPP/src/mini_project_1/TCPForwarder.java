@@ -5,83 +5,185 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Date;
 
+/**
+ * TCPForwarder
+ *
+ */
 public class TCPForwarder {
 
-	public static void main(String[] args) throws Exception {
-		ServerSocket listenSocket = null;
-		try {
-
-			int serverPort = Integer.parseInt(args[1]);
-			int destPort = Integer.parseInt(args[2]);
-			InetAddress destAddress = InetAddress.getByName(args[0]);
-
-			listenSocket = new ServerSocket(serverPort);
-			Socket destSocket = new Socket(destAddress, destPort);
-			while (true) {
-				System.out.println("Server started. Waiting for connections.");
-				Socket srcSocket = listenSocket.accept();
-				System.out.println("Accepted connection.");
-
-				// this creates two threads for bidirectional communication
-				// between client and server
-				new Forwarder(srcSocket, destSocket);
-				new Forwarder(destSocket, srcSocket);
+	/**
+	 * Main
+	 * 
+	 * @param args
+	 * @throws IOException
+	 * @throws InterruptedException
+	 */
+	public static void main(String[] args) throws IOException, InterruptedException {
+		int serverPort = Integer.parseInt(args[0]);
+		InetAddress destAddress = InetAddress.getByName(args[1]);
+		int destPort = Integer.parseInt(args[2]);
+		boolean running = true;
+		
+		ServerSocket serverSocket = new ServerSocket(serverPort);
+		System.out.println(new Date()+" INFO TCPForwarder: Created server for port "+serverPort+"...");
+		
+		while (running) {
+			try {
+				Socket clientSocket = serverSocket.accept();
+				System.out.println(new Date()+" INFO TCPForwarder: Accept connection...");
+				TCPForwarderConnection tcpForwarderConnection = new TCPForwarderConnection(clientSocket, destAddress, destPort);		
+				tcpForwarderConnection.start();
+			} catch (IOException e) {
+				System.out.println(new Date()+" ERROR TCPForwarder: Connection died!\n" + e.getMessage());
+				running = false;
 			}
-		} finally {
-			if (listenSocket != null)
-				listenSocket.close();
 		}
+		
+		if (serverSocket != null){
+			try {
+				serverSocket.close();
+			} catch (IOException e) {
+				System.out.println(new Date()+" ERROR TCPForwarder: Could not close server socket!\n"+e.getMessage());
+			}
+			System.out.println(new Date()+" INFO TCPForwarder: Server socket closed!\n");
+		}
+		
+	}
+	
+}
+
+/**
+ * TCPForwarderConnection
+ * 
+ * Opens a TCP connection between client and forwarder and forwarder and destination.
+ * Each TCP connection has an input stream for reading and an output steam for writing.
+ *
+ */
+class TCPForwarderConnection extends Thread{
+	private InetAddress destAddress;
+	private int destPort;
+	private Socket clientSocket = null;
+	private Socket destSocket = null;
+	private volatile boolean running = true;
+	
+	public TCPForwarderConnection(Socket clientSocket, InetAddress destAddress, int destPort){
+		this.clientSocket = clientSocket;
+		this.destAddress = destAddress;
+		this.destPort = destPort;
+	}
+	
+	public void run(){
+		try {
+			while (running) {
+				destSocket = new Socket(destAddress, destPort);
+				//System.out.println(new Date()+" INFO TCPForwarderConnection: Destination socket opened...");
+				//System.out.println(new Date()+" INFO TCPForwarderConnection: Start TCP connection to client...");
+				DataInputStream clientSocketIn = new DataInputStream(clientSocket.getInputStream());
+				DataOutputStream destSocketOut = new DataOutputStream(destSocket.getOutputStream());
+				Forwarder clientToDestConnection = new Forwarder(this,clientSocketIn,destSocketOut);
+				clientToDestConnection.start();
+				//System.out.println(new Date()+" INFO TCPForwarderConnection: Start TCP connection to destination...");
+				DataInputStream destSocketIn = new DataInputStream(destSocket.getInputStream());
+				DataOutputStream clientSocketOut = new DataOutputStream(clientSocket.getOutputStream());
+				Forwarder destToClientConnection = new Forwarder(this,destSocketIn,clientSocketOut);
+				destToClientConnection.start();
+				try {
+					//System.out.println(new Date()+" INFO TCPForwarderConnection: Sleeping...");
+					Thread.sleep(1000); //Limits the number of loops per time unit for relief of the CPU
+				} catch (InterruptedException e) {
+					System.out.println(new Date()+" ERROR TCPForwarderConnection: Sleeping failed!" + e.getMessage());
+				}
+			}
+		} catch(IOException e){
+			System.out.println(new Date()+" INFO TCPForwarderConnection: Connection died!\n" + e.getMessage());
+		} finally {
+			terminate();
+		}
+	}
+	
+	public synchronized void terminate(){
+		if (destSocket != null){
+			try {
+				destSocket.close();
+			} catch (IOException e) {
+				System.out.println(new Date()+" ERROR TCPForwarder: Could not close destination socket!\n"+e.getMessage());
+			}
+			//System.out.println(new Date()+" INFO TCPForwarder: Destination socket closed!");
+		}
+		if (clientSocket != null){
+			try {
+				clientSocket.close();
+			} catch (IOException e) {
+				System.out.println(new Date()+" ERROR TCPForwarder: Could not close client socket!\n"+e.getMessage());
+			}
+			//System.out.println(new Date()+" INFO TCPForwarder: Client socket closed!");
+		}
+		running = false;
 	}
 }
 
-/*
- * Forwards data from source socket input stream to destination socket output
- * stream
+/**
+ * Forwarder
+ * 
+ * Does the actual forwarding of the streams between client and destination.
+ * 
+ * @author Theresa
+ *
  */
 class Forwarder extends Thread {
-	private Socket srcSocket;
-	private DataInputStream srcIn;
-	private Socket destSocket;
-	private DataOutputStream destOut;
+	// max packet size is 65535 bytes
+	private static final int BUFFER_SIZE = 65535;
+	TCPForwarderConnection parent;
+	private DataInputStream socketIn; //reader
+	private DataOutputStream socketOut; //writer
 	private volatile boolean running = true;
-
-	public Forwarder(Socket srcSocket, Socket destSocket) throws Exception {
-		this.srcSocket = srcSocket;
-		this.srcIn = new DataInputStream(srcSocket.getInputStream());
-		this.destSocket = destSocket;
-		this.destOut = new DataOutputStream(destSocket.getOutputStream());
-
-		this.start();
+    
+	public Forwarder(TCPForwarderConnection parent, DataInputStream socketIn, DataOutputStream socketOut){
+		this.parent = parent;
+		this.socketIn = socketIn;
+		this.socketOut = socketOut;
+		//System.out.println(new Date()+" INFO TCPConnection: In/Output streams connected...");
 	}
 
 	public void run() {
+		byte[] buffer = new byte[BUFFER_SIZE];
 		try {
-			byte[] buffer;
-			while (running) {
-				// max packet size is 65535 bytes
-				buffer = new byte[65535];
-				// read incoming data from source input
-				srcIn.read(buffer);
-				// write same data to destination output
-				destOut.write(buffer);
-
-				Thread.sleep(1000);
+			int bytesRead = 0;
+			while(running) {
+				// Reading stream
+				//System.out.println(new Date()+" INFO TCPConnection: Listening for reading...");
+				bytesRead = socketIn.read(buffer);
+				//System.out.println(new Date()+" INFO TCPConnection: Reading...");
+				if (bytesRead==-1)
+					terminate();
+				else {
+					// Writing stream
+					//System.out.println(new Date()+" INFO TCPConnection: Listening for writing...");
+					socketOut.write(buffer, 0, bytesRead);
+					//System.out.println(new Date()+" INFO TCPConnection: Writing...");
+					socketOut.flush();
+					
+					yield(); //Gives other threads the chance to do something
+					
+					try {
+						//System.out.println(new Date()+" INFO TCPConnection: Sleeping...");
+						Thread.sleep(1000); //Limits the number of loops per time unit for relief of the CPU
+					} catch (InterruptedException e) {
+						System.out.println(new Date()+" ERROR TCPConnection: Sleeping failed!" + e.getMessage());
+					}
+				}
 			}
-
-		} catch (Exception e) {
-			System.out.println("Connection died:" + e.getMessage());
+		} catch (IOException e){
+			//System.out.println(new Date()+" INFO TCPConnection: Read/Write stopped!\n" + e.getMessage());
 		} finally {
-			try {
-				srcSocket.close();
-				destSocket.close();
-			} catch (IOException e) {
-				System.out.println("Close failed: " + e.getMessage());
-			}
+			parent.terminate();
 		}
 	}
 
-	public void terminate() {
-		this.running = false;
-	}
+    public void terminate() {
+        running = false;
+    }
+    
 }
