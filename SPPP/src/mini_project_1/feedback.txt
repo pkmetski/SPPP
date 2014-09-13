@@ -5,9 +5,9 @@ Comments:
 
 
 Write a TCP forwarder
-Design:
-Code: 
-Comments:
+Design: 0.5 hr
+Code: 4 hr
+Comments: Would have been easier if I were more confident in Thread programming. I wonder why so many sockets must be openened.
 
 
 Write a drop-in replacement for DatagramSocket
@@ -16,9 +16,9 @@ Code: 1hr
 Comments:
 
 Implement an RFC862 server
-Design:
-Code: 
-Comments:
+Design: 0.5 hr
+Code: 4 hr
+Comments: I wish I've done this task before the TCPForwarder, because basically it is a UDPServer and TCPServer in one.
 
 
 Write programs to estimate UDP datagram loss
