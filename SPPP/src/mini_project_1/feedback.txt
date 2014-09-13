@@ -1,0 +1,33 @@
+Write a UDP forwarder
+Design: 0.5hr
+Code: 1hr
+Comments:
+
+
+Write a TCP forwarder
+Design:
+Code: 
+Comments:
+
+
+Write a drop-in replacement for DatagramSocket
+Design: 0.5hr
+Code: 1hr
+Comments:
+
+Implement an RFC862 server
+Design:
+Code: 
+Comments:
+
+
+Write programs to estimate UDP datagram loss
+Design: 1hr
+Code: 3hr
+Comments:
+
+
+Write programs to reliably communicate over UDP
+Design: 3hr
+Code: 4hr
+Comments: I believe was a too big task for a mini project. It could have easily been a project on its own.
