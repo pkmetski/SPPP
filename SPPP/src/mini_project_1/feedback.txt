@@ -24,7 +24,10 @@ Comments: I wish I've done this task before the TCPForwarder, because basically 
 Write programs to estimate UDP datagram loss
 Design: 1hr
 Code: 3hr
-Comments:
+Comments: Since we found it impossible to establish a connection between two computers on the ITU WiFi network, or between two computers on ITU wired network, we ran the tests only locally.
+For a packet size of 255 bytes, 500 packets transferred and 1 ms between transfers there were no packets lost or duplicated.
+We believe, however, that this would not be the case for a WiFi connection. Our expectations are there would be packet loss due to interference.
+Even more so for the Internet setup, since a packet is to pass through multiple routers.
 
 
 Write programs to reliably communicate over UDP
