@@ -29,9 +29,9 @@ public class UDPReliableServer {
 			System.out.println("Listening at " + aSocket.getLocalAddress()
 					+ ":" + aSocket.getLocalPort());
 			// create socket at agreed port
-			byte[] buffer = new byte[UDPReliableMessageTranslator.HEADER_SIZE
-					+ UDPReliableMessageTranslator.CHUNK_SIZE];
 			while (true) {
+				byte[] buffer = new byte[UDPReliableMessageTranslator.HEADER_SIZE
+						+ UDPReliableMessageTranslator.CHUNK_SIZE];
 				DatagramPacket clientPacket = new DatagramPacket(buffer,
 						buffer.length);
 				System.out.println("Listening...");
@@ -75,6 +75,9 @@ public class UDPReliableServer {
 					break;
 				case EndData:
 					if (state != null) {
+						Message clientMessage2 = UDPReliableMessageTranslator
+								.getMessage(buffer);
+
 						state.addMessage(clientMessage.getByteIndex(),
 								clientMessage);
 
@@ -169,17 +172,10 @@ public class UDPReliableServer {
 			Collection<Message> messages) {
 		byte[] bytes = new byte[UDPReliableMessageTranslator.CHUNK_SIZE
 				* messages.size()];
-
-		ArrayList<byte[]> b = new ArrayList<byte[]>();
-
 		int count = 0;
 		for (Message msg : messages) {
 			for (byte bt : msg.getData()) {
 				bytes[count++] = bt;
-				if (count > 81) {
-					int p = 0;
-				}
-				b.add(msg.getData());
 			}
 		}
 		return bytes;

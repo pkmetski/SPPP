@@ -16,9 +16,9 @@ public class QuestionableDatagramSocket extends DatagramSocket {
 	private ErrorMode nextError = ErrorMode.None;
 	private DatagramPacket previousPacket = null;
 
-	public QuestionableDatagramSocket(int arg0, InetAddress arg1)
+	public QuestionableDatagramSocket(int port, InetAddress address)
 			throws SocketException {
-		super(arg0, arg1);
+		super(port, address);
 	}
 
 	@SuppressWarnings("incomplete-switch")
@@ -43,6 +43,8 @@ public class QuestionableDatagramSocket extends DatagramSocket {
 					super.send(previousPacket);
 				} else {
 					send = false;
+					// set the flag to false, on next time there will be 2
+					// packets to swap
 					incrementErrors = false;
 				}
 				break;
