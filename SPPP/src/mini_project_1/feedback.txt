@@ -6,7 +6,7 @@ Comments:
 
 Write a TCP forwarder
 Design: 0.5 hr
-Code: 4 hr
+Code: 8 hr
 Comments: Would have been easier if I were more confident in Thread programming. I wonder why so many sockets must be openened.
 
 
@@ -17,7 +17,7 @@ Comments:
 
 Implement an RFC862 server
 Design: 0.5 hr
-Code: 4 hr
+Code: 5 hr
 Comments: I wish I've done this task before the TCPForwarder, because basically it is a UDPServer and TCPServer in one.
 
 
