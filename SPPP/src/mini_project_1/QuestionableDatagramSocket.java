@@ -13,7 +13,10 @@ import java.util.Random;
  */
 public class QuestionableDatagramSocket extends DatagramSocket {
 
-	enum ErrorMode {None, Drop, Swap, Duplicate}
+	enum ErrorMode {
+		None, Drop, Swap, Duplicate
+	}
+
 	private final int ERRORS_PERC = 40;
 	private int PACKETS_TOTAL = 0;
 	private int ERRORS_TOTAL = 0;
@@ -26,40 +29,52 @@ public class QuestionableDatagramSocket extends DatagramSocket {
 		super(arg0, arg1);
 	}
 
+	// a flag indicating whether one packet has been collected prior to
+	// receiving the current one
+	boolean swappable = false;
+
 	public void send(DatagramPacket p) throws IOException {
+
 		// Flag for sending datagram packet
 		boolean send = true;
-		
+
 		// Get random error mode
 		if (this.nextError == ErrorMode.None)
 			this.nextError = getNextError();
-		
+
 		// If it is time for another error, do a random error
 		if (makeError()) {
 			// Flag for if the error count should be incremented
 			boolean incrementErrors = true;
-			
+
 			switch (nextError) {
-				case Drop:
-					// If errorMode=Drop, no packet is discarded
+			case Drop:
+				// If errorMode=Drop, no packet is discarded
+				send = false;
+				break;
+			case Duplicate:
+				// If errorMode=Duplicate, the packet is sent twice
+				super.send(p);
+				break;
+			case Swap:
+				// if swappable flag has been set, then there is already a
+				// previous packet, if not save current packet and don't send it
+				if (!swappable) {
+					this.previousPacket = p;
 					send = false;
-					break;
-				case Duplicate:
-					// If errorMode=Duplicate, the packet is sent twice
+					incrementErrors = false;
+					// on the next call to send, the packets will be swapped
+					swappable = true;
+				} else {
 					super.send(p);
-					break;
-				case Swap:
-					// If errorMode=Swap, the previous packet is sent again after the current packet
-					if (previousPacket != null) {
-						super.send(p);
-						super.send(previousPacket);
-					} else {
-						incrementErrors = false;
-					}
-					send = false;
-					break;
-				default:
-					break;
+					PACKETS_TOTAL++;
+					p = previousPacket;
+					swappable = false;
+				}
+
+				break;
+			default:
+				break;
 			}
 			if (incrementErrors) {
 				ERRORS_TOTAL++;
@@ -69,7 +84,6 @@ public class QuestionableDatagramSocket extends DatagramSocket {
 		if (send) {
 			super.send(p);
 		}
-		this.previousPacket = p;
 		PACKETS_TOTAL++;
 	}
 
