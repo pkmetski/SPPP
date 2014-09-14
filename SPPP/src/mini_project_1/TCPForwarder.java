@@ -76,7 +76,7 @@ class TCPForwarderConnection extends Thread{
 	
 	public void run(){
 		try {
-			while (running) {
+			/*while (running) { */
 				destSocket = new Socket(destAddress, destPort);
 				//System.out.println(new Date()+" INFO TCPForwarderConnection: Destination socket opened...");
 				//System.out.println(new Date()+" INFO TCPForwarderConnection: Start TCP connection to client...");
@@ -95,7 +95,7 @@ class TCPForwarderConnection extends Thread{
 				} catch (InterruptedException e) {
 					System.out.println(new Date()+" ERROR TCPForwarderConnection: Sleeping failed!" + e.getMessage());
 				}
-			}
+			//}
 		} catch(IOException e){
 			System.out.println(new Date()+" INFO TCPForwarderConnection: Connection died!\n" + e.getMessage());
 		} finally {

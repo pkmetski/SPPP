@@ -40,13 +40,14 @@ public class QuestionableDatagramSocket extends DatagramSocket {
 				break;
 			case Swap:
 				if (previousPacket != null) {
+					super.send(p);
 					super.send(previousPacket);
 				} else {
-					send = false;
 					// set the flag to false, on next time there will be 2
 					// packets to swap
 					incrementErrors = false;
 				}
+				send = false;
 				break;
 			}
 			if (incrementErrors) {

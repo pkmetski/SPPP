@@ -64,8 +64,7 @@ public class UDPReliableServer {
 						// expect
 						int byteIndex = clientMessage.getByteIndex();
 
-						state.addMessage(clientMessage.getByteIndex(),
-								clientMessage);
+						state.addMessage(byteIndex, clientMessage);
 
 						serverMessage = new Message(
 								MessageType.RequestData,
@@ -75,9 +74,6 @@ public class UDPReliableServer {
 					break;
 				case EndData:
 					if (state != null) {
-						Message clientMessage2 = UDPReliableMessageTranslator
-								.getMessage(buffer);
-
 						state.addMessage(clientMessage.getByteIndex(),
 								clientMessage);
 

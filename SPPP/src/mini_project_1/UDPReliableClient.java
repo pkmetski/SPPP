@@ -83,7 +83,7 @@ public class UDPReliableClient {
 				default:
 					throw new InvalidAttributeValueException();
 				}
-				
+
 				if (clientMessage != null) {
 					byte[] data2 = UDPReliableMessageTranslator
 							.getBytes(clientMessage);
