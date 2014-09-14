@@ -39,7 +39,10 @@ public class UDPLossTestClient {
 			aSocket.setSoTimeout(100);
 			for (int i = 0; i < datagramCount; i++) {
 
-				/* Prepare request */
+				/*
+				 * Prepare request. Generate a random string, so it can be
+				 * distinguished from the other requests.
+				 */
 				String requestMessage = MyStringRandomGen
 						.generateRandomString(datagramSize);
 

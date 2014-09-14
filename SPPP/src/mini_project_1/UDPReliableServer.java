@@ -196,6 +196,7 @@ class Client {
 
 	@Override
 	public int hashCode() {
+		// bit simplistic, but does the job
 		return this.address.getHostName().hashCode() * this.port;
 	}
 }
