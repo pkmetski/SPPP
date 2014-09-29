@@ -9,7 +9,6 @@ public class Publisher {
 	public static void main(String args[]) throws Exception {
 		Socket s = null;
 		while (running) {
-
 			s = new Socket(Configuration.PUBLISH_SUBSCRIBE_SYSTEM_ADDRESS,
 					Configuration.PUBLISH_SUBSCRIBE_SYSTEM_PUBLISHER_PORT);
 			DataOutputStream out = new DataOutputStream(s.getOutputStream());
